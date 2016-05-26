@@ -81,14 +81,26 @@ class DataGridRequestHandler
      */
     public function getPage(Request $request)
     {
-        $parameters = $this->fixParameters($request->query->all());
+        $requestParams = $request->query->all();
+        if (false == strstr($requestParams['sidx'], '_')) {
+            $parameters = $this->fixParameters($requestParams);
 
-        $transUnits = $this->storage->getTransUnitList(
-            $this->localeManager->getLocales(),
-            $request->query->get('rows', 20),
-            $request->query->get('page', 1),
-            $parameters
-        );
+            $transUnits = $this->storage->getEmptyTransUnits(
+                $this->localeManager->getLocales(),
+                $request->query->get('rows', 20),
+                $request->query->get('page', 1),
+                $parameters
+            );
+        } else {
+            $parameters = $this->fixParameters($requestParams);
+
+            $transUnits = $this->storage->getTransUnitList(
+                $this->localeManager->getLocales(),
+                $request->query->get('rows', 20),
+                $request->query->get('page', 1),
+                $parameters
+            );
+        }
 
         $count = $this->storage->countTransUnits($this->localeManager->getLocales(), $parameters);
 

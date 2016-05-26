@@ -110,6 +110,52 @@ class TransUnitRepository extends EntityRepository
     }
 
     /**
+     * Returns some trans units with their translations.
+     *
+     * @param array $locales
+     * @param int   $rows
+     * @param int   $page
+     * @param array $filters
+     * @return array
+     */
+    public function getEmptyTransUnits(array $locales = null, $rows = 20, $page = 1, array $filters = null)
+    {
+        $this->loadCustomHydrator();
+
+        $sortColumn = isset($filters['sidx']) ? $filters['sidx'] : 'id';
+        $order = isset($filters['sord']) ? $filters['sord'] : 'ASC';
+
+        $builder = $this->createQueryBuilder('tu')
+            ->select('tu.id');
+
+        $this->addTransUnitFilters($builder, $filters);
+        $this->addTranslationFilter($builder, $locales, $filters);
+
+        $query = $builder
+            ->leftJoin('tu.translations', 'te', 'WITH', 'te.locale = :locale')
+            ->setParameter('locale', $sortColumn)
+            ->where('te.content is NULL')
+            ->getQuery();
+        $ids = $query->getResult('SingleColumnArrayHydrator');
+
+        $transUnits = array();
+
+        if (count($ids) > 0) {
+            $qb = $this->createQueryBuilder('tu');
+
+            $query = $qb->select('tu, te')
+                ->leftJoin('tu.translations', 'te')
+                ->andWhere($qb->expr()->in('tu.id', $ids))
+                ->andWhere($qb->expr()->in('te.locale', $locales))
+                ->getQuery();
+
+            $transUnits = $query->getArrayResult();
+        }
+
+        return $transUnits;
+    }
+
+    /**
      * Count the number of trans unit.
      *
      * @param array $locales
