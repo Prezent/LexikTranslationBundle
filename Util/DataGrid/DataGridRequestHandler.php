@@ -82,7 +82,7 @@ class DataGridRequestHandler
     public function getPage(Request $request)
     {
         $requestParams = $request->query->all();
-        if (false == strstr($requestParams['sidx'], '_')) {
+        if (array_key_exists('sidx', $requestParams) && false == strstr($requestParams['sidx'], '_')) {
             $parameters = $this->fixParameters($requestParams);
 
             $transUnits = $this->storage->getEmptyTransUnits(
